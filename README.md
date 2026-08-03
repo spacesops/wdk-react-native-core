@@ -74,7 +74,10 @@ npm install @spacesops/wdk-react-native-core@1.0.0-beta.40
 npm install @spacesops/pear-wrk-wdk@1.1.1-beta.40 @spacesops/react-native-bare-kit@0.11.0-beta.40
 npm install @tetherto/wdk-react-native-secure-storage
 npm install react@">=18.0.0" react-native@">=0.70.0"
+npm install react-native-nitro-modules@">=0.35.0"
 ```
+
+`react-native-mmkv` (4.3.x) is bundled as a dependency; the host app must install **`react-native-nitro-modules` ≥ 0.35** so Android/iOS Nitro codegen (e.g. `HybridObject.CxxPart`) matches MMKV.
 
 **Host app notes (beta.40):**
 
