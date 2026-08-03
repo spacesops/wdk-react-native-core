@@ -62,7 +62,7 @@ Align **`wdk-react-native-core`** with the **Spacesops beta.40 pipeline** on bra
 **Do not add** `@spacesops/wdk-wallet-btc` — bitcoin runs **inside** pear’s bundle only.
 
 - [ ] Run **`npm install`** and commit **`package-lock.json`**
-- [ ] Verify lock resolves pear **1.1.1-beta.40** and bare-kit **0.11.0-beta.40** from registry (not git `a800d4a0…`)
+- [ ] Verify lock resolves pear **1.1.1-beta.44** and bare-kit **0.11.0-beta.44** from registry (not git `a800d4a0…`)
 
 ---
 
