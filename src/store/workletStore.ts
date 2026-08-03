@@ -42,9 +42,9 @@
 // External packages
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { Worklet } from 'react-native-bare-kit'
-import { HRPC } from '@tetherto/pear-wrk-wdk'
-import type { WorkletStartResponse } from '@tetherto/pear-wrk-wdk/types/rpc'
+import { Worklet } from '@spacesops/react-native-bare-kit'
+import { HRPC } from '@spacesops/pear-wrk-wdk'
+import type { WorkletStartResponse } from '@spacesops/pear-wrk-wdk/types/rpc'
 
 // Local imports
 import type {

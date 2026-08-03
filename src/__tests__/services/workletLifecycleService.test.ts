@@ -17,7 +17,7 @@ const mockWorkletInstance = {
   },
 }
 
-jest.mock('react-native-bare-kit', () => ({
+jest.mock('@spacesops/react-native-bare-kit', () => ({
   Worklet: jest.fn().mockImplementation(() => mockWorkletInstance),
 }))
 
@@ -26,9 +26,9 @@ const mockHRPCInstance = {
   ipc: mockWorkletInstance.IPC,
 }
 
-// Mock @tetherto/pear-wrk-wdk with proper module structure
+// Mock @spacesops/pear-wrk-wdk with proper module structure
 // Note: We create the mock HRPC inside the factory to avoid hoisting issues
-jest.mock('@tetherto/pear-wrk-wdk', () => {
+jest.mock('@spacesops/pear-wrk-wdk', () => {
   const mockHRPC = jest.fn().mockImplementation(() => ({
     workletStart: jest.fn(() => Promise.resolve({ status: 'success' })),
     ipc: mockWorkletInstance.IPC,
@@ -161,7 +161,7 @@ describe('WorkletLifecycleService', () => {
     mockHRPCInstance.workletStart.mockResolvedValue({ status: 'success' })
     
     // Reset HRPC constructor mock
-    const { HRPC } = require('@tetherto/pear-wrk-wdk')
+    const { HRPC } = require('@spacesops/pear-wrk-wdk')
     if (HRPC && typeof HRPC.mockImplementation === 'function') {
       HRPC.mockImplementation(() => mockHRPCInstance)
     }
@@ -192,14 +192,14 @@ describe('WorkletLifecycleService', () => {
       await WorkletLifecycleService.startWorklet(defaultNetworkConfigs)
 
       // Verify worklet was created
-      const { Worklet } = require('react-native-bare-kit')
+      const { Worklet } = require('@spacesops/react-native-bare-kit')
       expect(Worklet).toHaveBeenCalled()
 
       // Verify worklet.start was called with bundle
       expect(mockWorkletInstance.start).toHaveBeenCalledWith('/wdk-worklet.bundle', 'mock-bundle')
 
       // Verify HRPC was created
-      const { HRPC } = require('@tetherto/pear-wrk-wdk')
+      const { HRPC } = require('@spacesops/pear-wrk-wdk')
       expect(HRPC).toHaveBeenCalledWith(mockWorkletInstance.IPC)
 
       // Verify workletStart was called with serialized config
@@ -316,7 +316,7 @@ describe('WorkletLifecycleService', () => {
     it('should not start worklet if already started', async () => {
       // Clear previous calls
       mockHRPCInstance.workletStart.mockClear()
-      const { Worklet: WorkletConstructor } = require('react-native-bare-kit')
+      const { Worklet: WorkletConstructor } = require('@spacesops/react-native-bare-kit')
       WorkletConstructor.mockClear()
       ;(mockStore.setState as jest.Mock).mockClear()
       
@@ -350,7 +350,7 @@ describe('WorkletLifecycleService', () => {
     it('should not start worklet if already loading', async () => {
       // Clear previous calls
       mockHRPCInstance.workletStart.mockClear()
-      const { Worklet: WorkletConstructor } = require('react-native-bare-kit')
+      const { Worklet: WorkletConstructor } = require('@spacesops/react-native-bare-kit')
       WorkletConstructor.mockClear()
       ;(mockStore.setState as jest.Mock).mockClear()
       
@@ -446,7 +446,7 @@ describe('WorkletLifecycleService', () => {
       await WorkletLifecycleService.startWorklet(defaultNetworkConfigs)
 
       // Verify new worklet was created (old one should be cleaned up)
-      const { Worklet } = require('react-native-bare-kit')
+      const { Worklet } = require('@spacesops/react-native-bare-kit')
       expect(Worklet).toHaveBeenCalled()
     })
 

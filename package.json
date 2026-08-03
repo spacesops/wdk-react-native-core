@@ -1,6 +1,6 @@
 {
-  "name": "@tetherto/wdk-react-native-core",
-  "version": "1.0.0",
+  "name": "@spacesops/wdk-react-native-core",
+  "version": "1.0.0-beta.40",
   "description": "Core functionality for React Native wallets - wallet management, balance fetching, and worklet operations",
   "type": "module",
   "main": "./dist/index.js",
@@ -19,14 +19,18 @@
       "default": "./dist/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tetherto/wdk-react-native-core.git"
+    "url": "git+https://github.com/spacesops/wdk-react-native-core.git"
   },
   "bugs": {
-    "url": "https://github.com/tetherto/wdk-react-native-core/issues"
+    "url": "https://github.com/spacesops/wdk-react-native-core/issues"
   },
-  "homepage": "https://github.com/tetherto/wdk-react-native-core#readme",
+  "homepage": "https://github.com/spacesops/wdk-react-native-core#readme",
   "scripts": {
     "build": "tsc || true",
     "build:strict": "tsc",
@@ -45,14 +49,14 @@
     "blockchain",
     "balance"
   ],
-  "author": "Tetherto",
+  "author": "Spacesops",
   "license": "Apache-2.0",
   "dependencies": {
     "@tetherto/wdk-react-native-secure-storage": "github:tetherto/wdk-react-native-secure-storage",
     "@tanstack/react-query": "^5.0.0",
     "expo-crypto": "^15.0.8",
-    "@tetherto/pear-wrk-wdk": "github:tetherto/pear-wrk-wdk#v2",
-    "react-native-bare-kit": "^0.11.0",
+    "@spacesops/pear-wrk-wdk": "1.1.1-beta.40",
+    "@spacesops/react-native-bare-kit": "0.11.0-beta.40",
     "react-native-mmkv": "^4.1.0",
     "zod": "^3.22.0",
     "zustand": "^5.0.9"

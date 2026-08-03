@@ -5,7 +5,7 @@
  * to reduce code duplication across services.
  */
 
-import type { HRPC } from '@tetherto/pear-wrk-wdk'
+import type { HRPC } from '@spacesops/pear-wrk-wdk'
 
 import { getWorkletStore } from '../store/workletStore'
 import { getWalletStore } from '../store/walletStore'

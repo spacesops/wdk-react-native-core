@@ -5,8 +5,8 @@
  * This service is focused solely on worklet lifecycle management.
  */
 
-import { HRPC } from '@tetherto/pear-wrk-wdk'
-import { Worklet } from 'react-native-bare-kit'
+import { HRPC } from '@spacesops/pear-wrk-wdk'
+import { Worklet } from '@spacesops/react-native-bare-kit'
 
 import { getWalletStore } from '../store/walletStore'
 import { getWorkletStore } from '../store/workletStore'
@@ -133,12 +133,12 @@ export class WorkletLifecycleService {
 
       const worklet = new Worklet()
 
-      // Dynamic import of @tetherto/pear-wrk-wdk bundle
-      const pearWrkWdk = await import('@tetherto/pear-wrk-wdk')
+      // Dynamic import of @spacesops/pear-wrk-wdk bundle
+      const pearWrkWdk = await import('@spacesops/pear-wrk-wdk')
       const bundle = (pearWrkWdk as { bundle?: unknown }).bundle
 
       if (!bundle) {
-        throw new Error('Failed to load @tetherto/pear-wrk-wdk bundle')
+        throw new Error('Failed to load @spacesops/pear-wrk-wdk bundle')
       }
 
       // Bundle file (mobile bundle for React Native) - worklet.start expects bundle parameter

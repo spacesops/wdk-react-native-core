@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { AccountService } from '../services/accountService'
 import { AddressService } from '../services/addressService'
+import { WalletSetupService } from '../services/walletSetupService'
 import { WalletSwitchingService } from '../services/walletSwitchingService'
 import { getWalletStore } from '../store/walletStore'
 import { getWorkletStore } from '../store/workletStore'
@@ -154,6 +155,12 @@ export function useWallet(options?: {
     // Skip if switching should be skipped
     if (shouldSkipWalletSwitch(requestedWalletId, activeWalletId, isSwitchingWallet, switchingToWalletId)) {
       setIsTemporaryWallet(false)
+      return
+    }
+
+    // Skip until WdkAppProvider has registered SecureStorage (runs synchronously on mount)
+    if (!WalletSetupService.isSecureStorageInitialized()) {
+      log('[useWallet] SecureStorage not initialized yet, skipping wallet switch')
       return
     }
 

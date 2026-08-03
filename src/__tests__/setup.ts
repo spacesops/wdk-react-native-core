@@ -22,14 +22,14 @@ jest.mock('expo-crypto', () => ({
   getRandomBytesAsync: jest.fn(() => Promise.resolve(new Uint8Array(32))),
 }))
 
-// Mock @tetherto/pear-wrk-wdk
-jest.mock('@tetherto/pear-wrk-wdk', () => ({
+// Mock @spacesops/pear-wrk-wdk
+jest.mock('@spacesops/pear-wrk-wdk', () => ({
   Worklet: jest.fn(),
   createWorklet: jest.fn(),
 }))
 
-// Mock react-native-bare-kit
-jest.mock('react-native-bare-kit', () => ({
+// Mock @spacesops/react-native-bare-kit
+jest.mock('@spacesops/react-native-bare-kit', () => ({
   createBareKit: jest.fn(),
 }))
 

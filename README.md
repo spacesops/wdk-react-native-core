@@ -1,4 +1,4 @@
-# @tetherto/wdk-react-native-core
+# @spacesops/wdk-react-native-core
 
 Core functionality for React Native wallets - wallet management, balance fetching, and worklet operations.
 
@@ -17,7 +17,7 @@ Core functionality for React Native wallets - wallet management, balance fetchin
 ## Quick Start
 
 ```typescript
-import { WdkAppProvider, useWdkApp, useWallet, useBalance } from '@tetherto/wdk-react-native-core'
+import { WdkAppProvider, useWdkApp, useWallet, useBalance } from '@spacesops/wdk-react-native-core'
 import { createSecureStorage } from '@tetherto/wdk-react-native-secure-storage'
 
 function App() {
@@ -67,16 +67,25 @@ function WalletScreen() {
 
 ### Step 1: Install Dependencies
 
+This package is part of the **Spacesops beta.40 pipeline**. Install matching peer/runtime versions in your host app:
+
 ```bash
-npm install @tetherto/wdk-react-native-core
+npm install @spacesops/wdk-react-native-core@1.0.0-beta.40
+npm install @spacesops/pear-wrk-wdk@1.1.1-beta.40 @spacesops/react-native-bare-kit@0.11.0-beta.40
 npm install @tetherto/wdk-react-native-secure-storage
 npm install react@">=18.0.0" react-native@">=0.70.0"
 ```
 
+**Host app notes (beta.40):**
+
+- You do **not** need `wire-worklet.js`, `relink-bare-addons.js`, or a direct `@spacesops/wdk-wallet-btc` dependency—bitcoin runs inside the pear worklet bundle.
+- On **Android**, configure **`keepDebugSymbols`** for `libbare*.so` in your Expo app or config plugin (see `@spacesops/react-native-bare-kit` README).
+- Include **`bitcoin`** in `networkConfigs` (electrum URLs, etc.) so it matches pear’s `networks: ["bitcoin"]`.
+
 ### Step 2: Install from GitHub (if using source)
 
 ```bash
-npm install https://github.com/tetherto/wdk-react-native-core.git
+npm install https://github.com/spacesops/wdk-react-native-core.git
 ```
 
 Or add to your `package.json`:
@@ -84,7 +93,9 @@ Or add to your `package.json`:
 ```json
 {
   "dependencies": {
-    "@tetherto/wdk-react-native-core": "github:tetherto/wdk-react-native-core",
+    "@spacesops/wdk-react-native-core": "1.0.0-beta.40",
+    "@spacesops/pear-wrk-wdk": "1.1.1-beta.40",
+    "@spacesops/react-native-bare-kit": "0.11.0-beta.40",
     "@tetherto/wdk-react-native-secure-storage": "github:tetherto/wdk-react-native-secure-storage"
   }
 }
@@ -155,7 +166,7 @@ const { data: balance, isLoading } = useBalance({
 ### Basic Wallet Setup
 
 ```typescript
-import { WdkAppProvider, useWdkApp, useWalletManager } from '@tetherto/wdk-react-native-core'
+import { WdkAppProvider, useWdkApp, useWalletManager } from '@spacesops/wdk-react-native-core'
 
 function App() {
   return (
@@ -190,7 +201,7 @@ function WalletSetup() {
 ### Fetching Balances
 
 ```typescript
-import { useBalance, useBalancesForWallet } from '@tetherto/wdk-react-native-core'
+import { useBalance, useBalancesForWallet } from '@spacesops/wdk-react-native-core'
 
 function BalanceDisplay() {
   // Single balance
@@ -219,7 +230,7 @@ function BalanceDisplay() {
 ### Using Account Methods
 
 ```typescript
-import { useWallet } from '@tetherto/wdk-react-native-core'
+import { useWallet } from '@spacesops/wdk-react-native-core'
 
 function AccountOperations() {
   const { callAccountMethod, isInitialized } = useWallet()
@@ -266,7 +277,7 @@ function AccountOperations() {
 ### Multiple Wallets
 
 ```typescript
-import { useWallet } from '@tetherto/wdk-react-native-core'
+import { useWallet } from '@spacesops/wdk-react-native-core'
 
 function MultiWalletApp() {
   const wallet1 = useWallet({ identifier: 'wallet-1' })
@@ -284,7 +295,7 @@ function MultiWalletApp() {
 ### Refreshing Balances
 
 ```typescript
-import { useRefreshBalance } from '@tetherto/wdk-react-native-core'
+import { useRefreshBalance } from '@spacesops/wdk-react-native-core'
 
 function RefreshButton() {
   const { mutate: refreshBalance } = useRefreshBalance()

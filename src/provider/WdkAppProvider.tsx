@@ -194,13 +194,13 @@ export function WdkAppProvider({
   currentUserId,
   children,
 }: WdkAppProviderProps) {
-  // Create secureStorage singleton
-  const secureStorage = useMemo(() => createSecureStorage(), [])
-
-  // Set secureStorage in WalletSetupService
-  useEffect(() => {
-    WalletSetupService.setSecureStorage(secureStorage)
-  }, [secureStorage])
+  // Create secureStorage singleton and register synchronously so child effects
+  // (e.g. useWallet wallet switching) can access it on the first paint.
+  const secureStorage = useMemo(() => {
+    const storage = createSecureStorage()
+    WalletSetupService.setSecureStorage(storage)
+    return storage
+  }, [])
 
   // Clear sensitive data on mount AND when app goes to background
   // This ensures biometrics are always required on app restart or foreground
