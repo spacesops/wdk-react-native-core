@@ -72,6 +72,7 @@ export const mockSecureStorage = {
     return Promise.resolve()
   }),
   isBiometricAvailable: jest.fn(() => Promise.resolve(true)),
+  isDeviceSecurityEnabled: jest.fn(() => Promise.resolve(true)),
   deleteWallet: jest.fn((identifier?: string) => {
     const storageKey = getStorageKey(identifier)
     delete storage[storageKey]
