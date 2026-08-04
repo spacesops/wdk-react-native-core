@@ -62,6 +62,7 @@ export {
   balanceStringSchema,
   ethereumAddressSchema,
   sparkAddressSchema,
+  bitcoinAddressSchema,
   addressSchema,
 } from './utils/schemas'
 

@@ -22,9 +22,19 @@ export const sparkAddressSchema = z.string().regex(/^spark(1|t1|rt1|test1)[a-z0-
 }).min(14).max(90)
 
 /**
- * Address schema (Ethereum or Spark)
+ * Bitcoin address schema — mainnet/testnet/regtest bech32 (bc1/tb1/bcrt1) and legacy Base58.
  */
-export const addressSchema = z.union([ethereumAddressSchema, sparkAddressSchema])
+export const bitcoinAddressSchema = z.string().regex(
+  /^(bc1[qp][a-z0-9]{11,71}|tb1[qp][a-z0-9]{11,71}|bcrt1[qp][a-z0-9]{11,71}|[13][a-km-zA-HJ-NP-Z1-9]{25,34}|[mn2][a-km-zA-HJ-NP-Z1-9]{25,34})$/,
+  {
+    message: 'Must be a valid Bitcoin address (bech32 bc1/tb1/bcrt1 or legacy Base58)',
+  }
+)
+
+/**
+ * Address schema (Ethereum, Spark, or Bitcoin)
+ */
+export const addressSchema = z.union([ethereumAddressSchema, sparkAddressSchema, bitcoinAddressSchema])
 
 /**
  * Network configuration schema

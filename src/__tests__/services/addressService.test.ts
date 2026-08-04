@@ -136,6 +136,24 @@ describe('AddressService', () => {
       expect(mockHRPC.callMethod).toHaveBeenCalledTimes(2)
     })
 
+    it('should accept Bitcoin bech32 addresses from the worklet', async () => {
+      const bitcoinAddress = 'bc1qvm72xsn3x6gga6lavtf6qefswxzkp76xz4z98j'
+
+      mockHRPC.callMethod.mockResolvedValueOnce({
+        result: JSON.stringify(bitcoinAddress),
+      })
+
+      const address = await AddressService.getAddress('bitcoin', 0)
+
+      expect(address).toBe(bitcoinAddress)
+      expect(mockHRPC.callMethod).toHaveBeenCalledWith(
+        expect.objectContaining({
+          network: 'bitcoin',
+          accountIndex: 0,
+        })
+      )
+    })
+
     it('should handle different account indices', async () => {
       const address0 = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0'
       const address1 = '0x842d35Cc6634C0532925a3b844Bc9e7595f0bEb0'
