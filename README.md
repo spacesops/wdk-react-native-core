@@ -65,44 +65,59 @@ function WalletScreen() {
 
 ## Installation
 
-### Step 1: Install Dependencies
-
-This package is part of the **Spacesops beta.40 pipeline**. Install matching peer/runtime versions in your host app:
+### Step 1: Install
 
 ```bash
-npm install @spacesops/wdk-react-native-core@1.0.0-beta.40
-npm install @spacesops/pear-wrk-wdk@1.1.1-beta.40 @spacesops/react-native-bare-kit@0.11.0-beta.40
-npm install @tetherto/wdk-react-native-secure-storage
-npm install react@">=18.0.0" react-native@">=0.70.0"
-npm install react-native-nitro-modules@">=0.35.0"
+npm install @spacesops/wdk-react-native-core
+npm install react-native-nitro-modules   # >=0.35, required by react-native-mmkv
 ```
 
-`react-native-mmkv` (4.3.x) is bundled as a dependency; the host app must install **`react-native-nitro-modules` ≥ 0.35** so Android/iOS Nitro codegen (e.g. `HybridObject.CxxPart`) matches MMKV.
+**Install this package only.** `@spacesops/pear-wrk-wdk` (the worklet bundle) and `@spacesops/react-native-bare-kit` (the native runtime) arrive as dependencies at versions known to work together. Adding them to your own `dependencies` lets your ranges drift from the set this package was tested against, which fails at runtime rather than at install.
 
-**Host app notes (beta.40):**
+For the same reason, **never add a bare addon package** (`bare-crypto`, `@buildonspark/spark-frost-bare-addon`, anything with `"addon": true`) to your `dependencies`. The worklet bundle hardcodes the exact addon versions it links, pear pins all of them, and a direct dependency at a different version gets linked into your APK as a second unused `.so`.
 
-- You do **not** need `wire-worklet.js`, `relink-bare-addons.js`, or a direct `@spacesops/wdk-wallet-btc` dependency—bitcoin runs inside the pear worklet bundle.
-- On **Android**, configure **`keepDebugSymbols`** for `libbare*.so` in your Expo app or config plugin (see `@spacesops/react-native-bare-kit` README).
-- Include **`bitcoin`** in `networkConfigs` (electrum URLs, etc.) so it matches pear’s `networks: ["bitcoin"]`.
+### Step 2: Add the Expo config plugin
 
-### Step 2: Install from GitHub (if using source)
+```json
+{ "expo": { "plugins": ["@spacesops/react-native-bare-kit"] } }
+```
+
+This is not optional on Android. Bare addons are `dlopen`ed by filename and the loader reads their symbol tables directly, so stripping their debug symbols corrupts them — and only some builds strip, so **without the plugin your debug builds work and your release builds crash**. The plugin keeps symbols for every addon it finds in the tree, discovering them the same way the linker does rather than matching a fixed list of names.
+
+The plugin lives in `@spacesops/react-native-bare-kit` because the constraint is a property of the native runtime. It installs as a dependency of this package, so you do not need to add it to your own `dependencies` — only to `plugins` above.
+
+Non-Expo apps must do the equivalent in `android/app/build.gradle`; see the `@spacesops/react-native-bare-kit` README.
+
+### Step 3: Verify the native addons line up
 
 ```bash
-npm install https://github.com/spacesops/wdk-react-native-core.git
+npx wdk-verify-addons
 ```
 
-Or add to your `package.json`:
+Every addon the worklet bundle links must exist on disk at that exact version. Addon linking itself needs no setup — bare-kit's Gradle `preBuild` runs it on every Android build.
+
+If it reports a mismatch, the usual cause is a **stale lockfile**. npm preserves existing lock entries instead of re-resolving, so an incremental install can keep an older addon version hoisted and nest the correct one beneath it, putting two copies in your APK. Re-resolve from scratch:
+
+```bash
+rm -rf node_modules package-lock.json && npm install
+```
+
+`bare-posix` is reported as having no Android prebuild. That is expected — its `exports` map `android` to `unsupported.js`, so nothing can ever link it.
+
+### Expo SDK compatibility
+
+`@tetherto/wdk-react-native-secure-storage` targets **Expo SDK 55** (`expo-crypto@^55`, `expo-local-authentication@^55`). On **SDK 54** those ranges resolve to packages your app cannot use, and npm `overrides` are the only mechanism that can correct a transitive range — no library can do it for you. Add to your app's `package.json`:
 
 ```json
 {
-  "dependencies": {
-    "@spacesops/wdk-react-native-core": "1.0.0-beta.40",
-    "@spacesops/pear-wrk-wdk": "1.1.1-beta.40",
-    "@spacesops/react-native-bare-kit": "0.11.0-beta.40",
-    "@tetherto/wdk-react-native-secure-storage": "github:tetherto/wdk-react-native-secure-storage"
+  "overrides": {
+    "expo-crypto": "~15.0.9",
+    "expo-local-authentication": "~17.0.8"
   }
 }
 ```
+
+Drop these once you move to SDK 55 or later.
 
 ## Core Concepts
 
@@ -490,6 +505,16 @@ The `WdkAppProvider` uses a **consolidated effect** for wallet state synchroniza
 5. Sensitive data is automatically cleared on app background
 
 ## Troubleshooting
+
+### Native addons fail to load (`ADDON_NOT_FOUND`, `dlopen` failures, release-only crashes)
+
+Start with `npx wdk-verify-addons`, then see **`node_modules/@spacesops/react-native-bare-kit/TROUBLESHOOTING.md`**. A listed candidate in an `ADDON_NOT_FOUND` message means the file *was* found and `dlopen` failed, so it is a symbol problem rather than a missing or misnamed library — and bare truncates the real cause out of the log.
+
+If it only reproduces in release builds, you are almost certainly missing the Expo config plugin from Step 2.
+
+### Errors from a specific network after the worklet starts
+
+Failures scoped to one chain (a wrong or `undefined` address, `MODULE_NOT_FOUND` for a wallet file) come from the versions packed inside the worklet bundle, not from your app. The same packages in your `node_modules` are used for types and never execute, so they can look correct while the device fails. These need a `@spacesops/pear-wrk-wdk` release; report them rather than patching locally.
 
 ### Wallet Initialization Fails
 

@@ -1,6 +1,6 @@
 {
   "name": "@spacesops/wdk-react-native-core",
-  "version": "1.0.0-beta.53",
+  "version": "1.0.0-beta.54",
   "description": "Core functionality for React Native wallets - wallet management, balance fetching, and worklet operations",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,7 +10,8 @@
     "dist",
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "bin"
   ],
   "exports": {
     ".": {
@@ -38,8 +39,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "prepack": "npm run build",
-    "postinstall": "npm run build"
+    "prepack": "npm run build"
   },
   "keywords": [
     "wallet",
@@ -52,11 +52,11 @@
   "author": "Spacesops",
   "license": "Apache-2.0",
   "dependencies": {
-    "@tetherto/wdk-react-native-secure-storage": "github:tetherto/wdk-react-native-secure-storage",
-    "@tanstack/react-query": "^5.0.0",
-    "expo-crypto": "^15.0.8",
     "@spacesops/pear-wrk-wdk": "1.1.1-beta.43",
-    "@spacesops/react-native-bare-kit": "0.11.0-beta.48",
+    "@spacesops/react-native-bare-kit": "0.11.0-beta.49",
+    "@tanstack/react-query": "^5.0.0",
+    "@tetherto/wdk-react-native-secure-storage": "1.0.0-beta.5",
+    "expo-crypto": "^15.0.8",
     "react-native-mmkv": "^4.3.0",
     "zod": "^3.22.0",
     "zustand": "^5.0.9"
@@ -77,5 +77,8 @@
     "react": "*",
     "react-native": ">=0.70.0",
     "react-native-nitro-modules": ">=0.35.0"
+  },
+  "bin": {
+    "wdk-verify-addons": "./bin/verify-addons.mjs"
   }
 }
