@@ -356,7 +356,7 @@ export function useWalletManager(
             type: 'ready',
             identifier: resolvedWalletId,
           })
-          const withoutDup = withReady.walletList.filter(
+          const withoutDup = (withReady.walletList ?? []).filter(
             (w: WalletInfo) => w.identifier !== resolvedWalletId
           )
           return {
