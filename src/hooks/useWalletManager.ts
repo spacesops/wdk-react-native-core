@@ -333,49 +333,54 @@ export function useWalletManager(
   const initializeFromMnemonic = useCallback(
     async (mnemonic: string, walletIdParam?: string) => {
       setError(null)
-      const targetWalletId = walletIdParam ?? walletId
+      const resolvedWalletId = walletIdParam ?? walletId ?? 'default'
       const walletStore = getWalletStore()
       const effectiveNetworkConfigs = getNetworkConfigs()
 
       try {
-        // Update loading state in store (single source of truth)
-        if (targetWalletId) {
-          walletStore.setState((prev) => updateWalletLoadingState(prev, {
-            type: 'loading',
-            identifier: targetWalletId,
-            walletExists: false, // New wallet from mnemonic
-          }))
-        }
+        walletStore.setState((prev) => updateWalletLoadingState(prev, {
+          type: 'loading',
+          identifier: resolvedWalletId,
+          walletExists: false, // New wallet from mnemonic
+        }))
 
         await WalletSetupService.initializeFromMnemonic(
           effectiveNetworkConfigs,
           mnemonic,
-          targetWalletId
+          resolvedWalletId
         )
 
-        // Mark as ready on success
-        if (targetWalletId) {
-          walletStore.setState((prev) => updateWalletLoadingState(prev, {
+        // Mark ready, set active, and record in walletList so getCurrentWalletId / delete work.
+        walletStore.setState((prev) => {
+          const withReady = updateWalletLoadingState(prev, {
             type: 'ready',
-            identifier: targetWalletId,
-          }))
-        }
+            identifier: resolvedWalletId,
+          })
+          const withoutDup = withReady.walletList.filter(
+            (w: WalletInfo) => w.identifier !== resolvedWalletId
+          )
+          return {
+            ...withReady,
+            activeWalletId: resolvedWalletId,
+            walletList: [
+              ...withoutDup,
+              { identifier: resolvedWalletId, exists: true, isActive: true },
+            ],
+          }
+        })
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : String(err)
         const errorObj = err instanceof Error ? err : new Error(String(err))
         logError('Failed to initialize wallet from mnemonic:', err)
         setError(errorMessage)
-        
-        // Cleanup state on error
-        if (targetWalletId) {
-          walletStore.setState((prev) => updateWalletLoadingState(prev, {
-            type: 'error',
-            identifier: targetWalletId,
-            error: errorObj,
-          }))
-        }
-        
+
+        walletStore.setState((prev) => updateWalletLoadingState(prev, {
+          type: 'error',
+          identifier: resolvedWalletId,
+          error: errorObj,
+        }))
+
         throw err
       }
     },
@@ -393,11 +398,9 @@ export function useWalletManager(
       setError(null)
 
       try {
-        const targetWalletId = walletIdParam ?? walletId
-        if (!targetWalletId) {
-          throw new Error('Wallet ID is required for deletion')
-        }
-        
+        // Match create/import default when caller omits an id (JSDoc: deletes the default wallet).
+        const targetWalletId = walletIdParam ?? walletId ?? 'default'
+
         await WalletSetupService.deleteWallet(targetWalletId)
 
         // Remove from wallet list and clear all wallet-specific data
