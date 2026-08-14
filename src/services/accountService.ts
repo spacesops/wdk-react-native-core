@@ -130,5 +130,99 @@ export class AccountService {
       })
     }
   }
+
+  /**
+   * Call a method on a wallet account resolved by BIP relative derivation path
+   * via worklet `callMethodByPath` → `wdk.getAccountByPath(network, path)`.
+   *
+   * Path is the wallet-relative BIP suffix (e.g. `"0'/0/0"` or `"9'/0/1"`),
+   * not the full `m/86'/0'/…` path.
+   *
+   * @example
+   * ```typescript
+   * const address = await AccountService.callAccountMethodByPath(
+   *   'bitcoin',
+   *   "9'/0/0",
+   *   'getAddress'
+   * )
+   * const scriptPubKeyHex = await AccountService.callAccountMethodByPath(
+   *   'bitcoin',
+   *   "9'/0/0",
+   *   'getScriptPubKeyHex',
+   *   address
+   * )
+   * ```
+   */
+  static async callAccountMethodByPath<T = unknown>(
+    network: string,
+    path: string,
+    methodName: string,
+    args?: unknown,
+    walletId?: string
+  ): Promise<T> {
+    if (typeof methodName !== 'string' || methodName.trim().length === 0) {
+      throw new Error('methodName must be a non-empty string')
+    }
+    if (typeof path !== 'string' || path.trim().length === 0) {
+      throw new Error('path must be a non-empty string')
+    }
+
+    validateNetworkName(network)
+
+    const hrpc = requireInitialized()
+
+    if (typeof hrpc.callMethodByPath !== 'function') {
+      throw new Error(
+        'HRPC.callMethodByPath is not available — upgrade @spacesops/pear-wrk-wdk'
+      )
+    }
+
+    let argsString: string | null = null
+    if (args !== undefined && args !== null) {
+      argsString = safeStringify(args)
+    }
+
+    const trimmedPath = path.trim()
+
+    try {
+      const response = await hrpc.callMethodByPath({
+        methodName,
+        network,
+        path: trimmedPath,
+        args: argsString,
+      })
+
+      const validatedResponse = workletResponseSchema.parse(response)
+
+      // Some account methods (e.g. getTaprootKeyMaterialHex) intentionally return null
+      if (validatedResponse.result === null || validatedResponse.result === undefined) {
+        throw new Error(`Method ${methodName} returned no result`)
+      }
+
+      let parsed: T
+      try {
+        parsed = JSON.parse(validatedResponse.result) as T
+      } catch (error) {
+        throw new Error(
+          `Failed to parse result from ${methodName}: ${error instanceof Error ? error.message : String(error)}`
+        )
+      }
+
+      if (methodName === 'getBalance' || methodName === 'getTokenBalance') {
+        if (typeof parsed !== 'string' || !/^\d+$/.test(parsed)) {
+          throw new Error(`Invalid balance format: ${parsed}`)
+        }
+      }
+
+      return convertBigIntToString(parsed) as T
+    } catch (error) {
+      handleServiceError(error, 'AccountService', `callAccountMethodByPath:${methodName}`, {
+        network,
+        path: trimmedPath,
+        methodName,
+        ...(walletId ? { walletId } : {}),
+      })
+    }
+  }
 }
 

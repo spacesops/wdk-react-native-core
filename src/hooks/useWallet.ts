@@ -105,6 +105,12 @@ export interface UseWalletResult {
     methodName: string,
     args?: unknown
   ) => Promise<T>
+  callAccountMethodByPath: <T = unknown>(
+    network: string,
+    path: string,
+    methodName: string,
+    args?: unknown
+  ) => Promise<T>
 }
 
 export function useWallet(options?: {
@@ -250,6 +256,17 @@ export function useWallet(options?: {
     return AccountService.callAccountMethod<T>(network, accountIndex, methodName, args, walletId)
   }, [targetWalletId])
 
+  // Call a method on a wallet account resolved by BIP relative path
+  const callAccountMethodByPath = useCallback(async <T = unknown>(
+    network: string,
+    path: string,
+    methodName: string,
+    args?: unknown
+  ): Promise<T> => {
+    const walletId = targetWalletId || '__temporary__'
+    return AccountService.callAccountMethodByPath<T>(network, path, methodName, args, walletId)
+  }, [targetWalletId])
+
   // Memoize the entire result object to ensure stable reference
   // useShallow already provides stable references for addresses and walletLoading
   // We memoize the result object to prevent creating new objects on every render
@@ -269,6 +286,7 @@ export function useWallet(options?: {
     // Actions
     getAddress,
     callAccountMethod,
+    callAccountMethodByPath,
   }), [
     addresses,
     walletLoading,
@@ -281,6 +299,7 @@ export function useWallet(options?: {
     isLoadingAddress,
     getAddress,
     callAccountMethod,
+    callAccountMethodByPath,
   ]);
 
   return result;

@@ -183,6 +183,13 @@ export interface WalletStore {
     methodName: string,
     args?: unknown
   ) => Promise<T>
+  /** Call a method on a wallet account resolved by BIP relative path */
+  callAccountMethodByPath?: <T = unknown>(
+    network: string,
+    path: string,
+    methodName: string,
+    args?: unknown
+  ) => Promise<T>
   /** Check if the wallet is initialized */
   isWalletInitialized: () => boolean
 }

@@ -79,7 +79,10 @@ export function getWalletAddresses(
  * 
  * @returns Base wallet store implementation
  */
-export function createBaseWalletStore(): Pick<WalletStore, 'callAccountMethod' | 'isWalletInitialized'> & {
+export function createBaseWalletStore(): Pick<
+  WalletStore,
+  'callAccountMethod' | 'callAccountMethodByPath' | 'isWalletInitialized'
+> & {
   getWalletAddresses: (accountIndex: number) => Record<string, string>
 } {
   const workletStore = getWorkletStore()
@@ -93,6 +96,15 @@ export function createBaseWalletStore(): Pick<WalletStore, 'callAccountMethod' |
       args?: unknown
     ): Promise<T> => {
       return AccountService.callAccountMethod<T>(network, accountIndex, methodName, args)
+    },
+
+    callAccountMethodByPath: async <T = unknown>(
+      network: string,
+      path: string,
+      methodName: string,
+      args?: unknown
+    ): Promise<T> => {
+      return AccountService.callAccountMethodByPath<T>(network, path, methodName, args)
     },
 
     isWalletInitialized: () => {

@@ -333,5 +333,84 @@ describe('AccountService', () => {
       ).rejects.toThrow()
     })
   })
-})
 
+  describe('callAccountMethodByPath', () => {
+    beforeEach(() => {
+      mockHRPC.callMethodByPath = jest.fn()
+    })
+
+    it('should call method by path and return result', async () => {
+      mockHRPC.callMethodByPath.mockResolvedValue({
+        result: JSON.stringify('bc1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'),
+      })
+
+      const result = await AccountService.callAccountMethodByPath(
+        'bitcoin',
+        "9'/0/0",
+        'getAddress'
+      )
+
+      expect(result).toBe('bc1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
+      expect(mockHRPC.callMethodByPath).toHaveBeenCalledWith({
+        methodName: 'getAddress',
+        network: 'bitcoin',
+        path: "9'/0/0",
+        args: null,
+      })
+    })
+
+    it('should pass string args for getScriptPubKeyHex', async () => {
+      const address = 'bc1pqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'
+      mockHRPC.callMethodByPath.mockResolvedValue({
+        result: JSON.stringify('5120abcd'),
+      })
+
+      const result = await AccountService.callAccountMethodByPath(
+        'bitcoin',
+        "9'/0/1",
+        'getScriptPubKeyHex',
+        address
+      )
+
+      expect(result).toBe('5120abcd')
+      expect(mockHRPC.callMethodByPath).toHaveBeenCalledWith({
+        methodName: 'getScriptPubKeyHex',
+        network: 'bitcoin',
+        path: "9'/0/1",
+        args: JSON.stringify(address),
+      })
+    })
+
+    it('should allow null JSON results (e.g. missing taproot keys)', async () => {
+      mockHRPC.callMethodByPath.mockResolvedValue({
+        result: JSON.stringify(null),
+      })
+
+      const result = await AccountService.callAccountMethodByPath(
+        'bitcoin',
+        "9'/0/0",
+        'getTaprootKeyMaterialHex'
+      )
+
+      expect(result).toBeNull()
+    })
+
+    it('should validate path and methodName', async () => {
+      await expect(
+        AccountService.callAccountMethodByPath('bitcoin', '', 'getAddress')
+      ).rejects.toThrow('path must be a non-empty string')
+
+      await expect(
+        AccountService.callAccountMethodByPath('bitcoin', "9'/0/0", '')
+      ).rejects.toThrow('methodName must be a non-empty string')
+    })
+
+    it('should throw if callMethodByPath is missing on HRPC', async () => {
+      delete mockHRPC.callMethodByPath
+
+      await expect(
+        AccountService.callAccountMethodByPath('bitcoin', "9'/0/0", 'getAddress')
+      ).rejects.toThrow(/callMethodByPath is not available/)
+    })
+  })
+})
