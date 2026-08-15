@@ -15,6 +15,23 @@ export const ethereumAddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, {
 })
 
 /**
+ * Token contract address schema — EVM, TON, Tron, Solana, and other worklet-supported formats.
+ * Wallet receive addresses use {@link addressSchema}; token mint/contract IDs are chain-specific.
+ */
+export const tokenContractAddressSchema = z.union([
+  ethereumAddressSchema,
+  z.string().regex(/^T[1-9A-HJ-NP-Za-km-z]{33}$/, {
+    message: 'Must be a valid Tron token contract address',
+  }),
+  z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, {
+    message: 'Must be a valid Solana token mint address',
+  }),
+  z.string().regex(/^(EQ|UQ)[A-Za-z0-9_-]{46}$/, {
+    message: 'Must be a valid TON jetton master address',
+  }),
+])
+
+/**
  * Spark address schema (Bech32 format: spark1/sparkt1/sparkrt1 followed by base32 characters)
  */
 export const sparkAddressSchema = z.string().regex(/^spark(1|t1|rt1|test1)[a-z0-9]+$/, {
@@ -32,9 +49,37 @@ export const bitcoinAddressSchema = z.string().regex(
 )
 
 /**
- * Address schema (Ethereum, Spark, or Bitcoin)
+ * TON user-friendly wallet address (EQ/UQ + base64url).
  */
-export const addressSchema = z.union([ethereumAddressSchema, sparkAddressSchema, bitcoinAddressSchema])
+export const tonAddressSchema = z.string().regex(/^(EQ|UQ)[A-Za-z0-9_-]{46}$/, {
+  message: 'Must be a valid TON address (EQ/UQ user-friendly format)',
+})
+
+/**
+ * Tron Base58Check wallet address.
+ */
+export const tronAddressSchema = z.string().regex(/^T[1-9A-HJ-NP-Za-km-z]{33}$/, {
+  message: 'Must be a valid Tron address',
+})
+
+/**
+ * Solana Base58 wallet address.
+ */
+export const solanaAddressSchema = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{32,44}$/, {
+  message: 'Must be a valid Solana address',
+})
+
+/**
+ * Address schema (Ethereum, Spark, Bitcoin, TON, Tron, or Solana)
+ */
+export const addressSchema = z.union([
+  ethereumAddressSchema,
+  sparkAddressSchema,
+  bitcoinAddressSchema,
+  tonAddressSchema,
+  tronAddressSchema,
+  solanaAddressSchema,
+])
 
 /**
  * Network configuration schema
@@ -69,7 +114,7 @@ export const tokenConfigSchema = z.object({
   symbol: z.string().min(1),
   name: z.string().min(1),
   decimals: z.number().int().min(0).max(18),
-  address: z.union([ethereumAddressSchema, z.null()]),
+  address: z.union([tokenContractAddressSchema, z.null()]),
 })
 
 /**
@@ -158,7 +203,7 @@ export const balanceFetchResultSchema = z.object({
   success: z.boolean(),
   network: networkNameSchema,
   accountIndex: accountIndexSchema,
-  tokenAddress: z.union([ethereumAddressSchema, z.null()]),
+  tokenAddress: z.union([tokenContractAddressSchema, z.null()]),
   balance: z.union([balanceStringSchema, z.null()]),
   error: z.string().optional(),
 })

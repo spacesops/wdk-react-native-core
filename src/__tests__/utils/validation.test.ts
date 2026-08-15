@@ -49,6 +49,45 @@ describe('validation', () => {
       expect(() => validateTokenConfigs(validConfigs)).not.toThrow()
     })
 
+    it('should accept non-EVM token contract addresses', () => {
+      const configs: TokenConfigs = {
+        ton: {
+          native: { symbol: 'TON', name: 'Toncoin', decimals: 9, address: null },
+          tokens: [
+            {
+              address: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
+              symbol: 'USDT',
+              name: 'Tether USD',
+              decimals: 6,
+            },
+          ],
+        },
+        tron: {
+          native: { symbol: 'TRX', name: 'TRON', decimals: 6, address: null },
+          tokens: [
+            {
+              address: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+              symbol: 'USDT',
+              name: 'Tether USD',
+              decimals: 6,
+            },
+          ],
+        },
+        solana: {
+          native: { symbol: 'SOL', name: 'Solana', decimals: 9, address: null },
+          tokens: [
+            {
+              address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+              symbol: 'USDT',
+              name: 'Tether USD',
+              decimals: 6,
+            },
+          ],
+        },
+      }
+      expect(() => validateTokenConfigs(configs)).not.toThrow()
+    })
+
     it('should throw for invalid token configs', () => {
       expect(() => validateTokenConfigs({} as TokenConfigs)).toThrow()
       expect(() => validateTokenConfigs(null as unknown as TokenConfigs)).toThrow()
@@ -124,6 +163,9 @@ describe('validation', () => {
       expect(() => validateTokenAddress(null)).not.toThrow()
       expect(() => validateTokenAddress('0x1234567890123456789012345678901234567890')).not.toThrow()
       expect(() => validateTokenAddress('0xABCDEFabcdef1234567890123456789012345678')).not.toThrow()
+      expect(() => validateTokenAddress('TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t')).not.toThrow()
+      expect(() => validateTokenAddress('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB')).not.toThrow()
+      expect(() => validateTokenAddress('EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs')).not.toThrow()
     })
 
     it('should throw for invalid token addresses', () => {

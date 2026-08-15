@@ -13,6 +13,7 @@ import {
   isValidAccountIndex,
   isValidNetworkName,
   isValidBalanceString,
+  isValidAddress,
 } from '../../utils/typeGuards'
 import type { NetworkConfig, NetworkConfigs, TokenConfig, TokenConfigs } from '../../types'
 
@@ -157,6 +158,14 @@ describe('typeGuards', () => {
       expect(isEthereumAddress('1234567890123456789012345678901234567890')).toBe(false)
       expect(isEthereumAddress(null)).toBe(false)
       expect(isEthereumAddress(123)).toBe(false)
+    })
+  })
+
+  describe('isValidAddress', () => {
+    it('should accept TON, Tron, and Solana wallet addresses', () => {
+      expect(isValidAddress('UQCt4XDZ_rgMu14lE5ENox6yqHxx3c9df-gHLynhEEKbTRV0')).toBe(true)
+      expect(isValidAddress('TVKDsaESudgCQReXPNvStw2n2BXnmodyeC')).toBe(true)
+      expect(isValidAddress('Ed9f9Koh6rqMvFXccVJp5bNuxFs8rYdbVibW9JXRskLU')).toBe(true)
     })
   })
 

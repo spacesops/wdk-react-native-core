@@ -13,7 +13,7 @@ import {
   accountIndexSchema,
   networkNameSchema,
   balanceStringSchema,
-  ethereumAddressSchema,
+  tokenContractAddressSchema,
 } from './schemas'
 import type { NetworkConfigs, TokenConfigs } from '../types'
 
@@ -133,7 +133,7 @@ export function validateTokenAddress(tokenAddress: string | null): void {
     return
   }
   try {
-    ethereumAddressSchema.parse(tokenAddress)
+    tokenContractAddressSchema.parse(tokenAddress)
   } catch (error) {
     const message = getZodErrorMessage(error)
     throw new Error(`Invalid tokenAddress: ${message}`)

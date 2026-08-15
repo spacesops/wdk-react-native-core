@@ -21,6 +21,7 @@ import {
   accountIndexSchema,
   networkNameSchema,
   balanceStringSchema,
+  addressSchema,
 } from './schemas'
 import type {
   NetworkConfig,
@@ -104,10 +105,10 @@ export function isBitcoinAddress(value: unknown): value is string {
 }
 
 /**
- * Type guard to check if a value is a valid address (Ethereum, Spark, or Bitcoin)
+ * Type guard to check if a value is a valid address (Ethereum, Spark, Bitcoin, TON, Tron, or Solana)
  */
 export function isValidAddress(value: unknown): value is string {
-  return isEthereumAddress(value) || isSparkAddress(value) || isBitcoinAddress(value)
+  return addressSchema.safeParse(value).success
 }
 
 /**
