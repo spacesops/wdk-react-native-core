@@ -54,8 +54,10 @@ import {
   NATIVE_TOKEN_KEY,
   DEFAULT_QUERY_STALE_TIME_MS,
   DEFAULT_QUERY_GC_TIME_MS,
+  BALANCE_FETCH_STAGGER_MS,
 } from '../utils/constants'
 import { logError } from '../utils/logger'
+import { delay, withTransientRetry } from '../utils/retryUtils'
 import { validateWalletParams } from '../utils/validation'
 import type { BalanceFetchResult, TokenConfigProvider } from '../types'
 
@@ -203,11 +205,17 @@ async function fetchBalance(
     const methodName = isNative ? ACCOUNT_METHOD_GET_BALANCE : ACCOUNT_METHOD_GET_TOKEN_BALANCE
     const methodArg = isNative ? null : tokenAddress
 
-    const balanceResult = await AccountService.callAccountMethod<string>(
-      network,
-      accountIndex,
-      methodName,
-      methodArg
+    const balanceResult = await withTransientRetry(
+      () =>
+        AccountService.callAccountMethod<string>(
+          network,
+          accountIndex,
+          methodName,
+          methodArg
+        ),
+      {
+        label: `${network} ${methodName}`,
+      }
     )
 
     // Convert to string (handles BigInt values)
@@ -335,23 +343,70 @@ function buildBalanceQueryKeys(
 }
 
 /**
- * Fetch balances for all query keys
+ * Group balance query keys by network, preserving first-seen network order.
+ */
+function groupQueryKeysByNetwork(
+  queryKeys: ReturnType<typeof balanceQueryKeys.byToken>[]
+): ReturnType<typeof balanceQueryKeys.byToken>[][] {
+  const networkOrder: string[] = []
+  const byNetwork = new Map<string, ReturnType<typeof balanceQueryKeys.byToken>[]>()
+
+  for (const queryKey of queryKeys) {
+    const { network } = validateQueryKeyStructure(queryKey)
+    if (!byNetwork.has(network)) {
+      networkOrder.push(network)
+      byNetwork.set(network, [])
+    }
+    byNetwork.get(network)!.push(queryKey)
+  }
+
+  return networkOrder.map((network) => byNetwork.get(network)!)
+}
+
+function balanceQueryKeyId(queryKey: ReturnType<typeof balanceQueryKeys.byToken>): string {
+  return queryKey.join('\0')
+}
+
+/**
+ * Fetch balances for all query keys, staggering per-network to avoid RPC bursts.
  */
 async function fetchBalancesForQueryKeys(
   queryKeys: ReturnType<typeof balanceQueryKeys.byToken>[],
   walletId: string
 ): Promise<BalanceFetchResult[]> {
-  return Promise.all(
-    queryKeys.map(async (queryKey) => {
-      const validated = validateQueryKeyStructure(queryKey)
-      return fetchBalance(
-        validated.network,
-        validated.accountIndex,
-        validated.tokenAddress,
-        walletId
-      )
-    })
-  )
+  if (queryKeys.length === 0) {
+    return []
+  }
+
+  const networkGroups = groupQueryKeysByNetwork(queryKeys)
+  const results = new Map<string, BalanceFetchResult>()
+  let isFirstNetwork = true
+
+  for (const keys of networkGroups) {
+    if (!isFirstNetwork) {
+      await delay(BALANCE_FETCH_STAGGER_MS)
+    }
+    isFirstNetwork = false
+
+    const networkResults = await Promise.all(
+      keys.map(async (queryKey) => {
+        const validated = validateQueryKeyStructure(queryKey)
+        const result = await fetchBalance(
+          validated.network,
+          validated.accountIndex,
+          validated.tokenAddress,
+          walletId
+        )
+        return { id: balanceQueryKeyId(queryKey), result }
+      })
+    )
+
+    for (const { id, result } of networkResults) {
+      results.set(id, result)
+    }
+  }
+
+  return queryKeys.map((queryKey) => results.get(balanceQueryKeyId(queryKey))!)
 }
 
 /**

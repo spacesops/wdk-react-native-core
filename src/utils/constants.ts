@@ -68,6 +68,22 @@ export const DEFAULT_QUERY_STALE_TIME_MS = 30 * 1000
 export const DEFAULT_QUERY_GC_TIME_MS = 5 * 60 * 1000
 
 /**
+ * Delay between per-network balance fetches on wallet load (ms).
+ * Spreads RPC load across chains instead of firing every network at once.
+ */
+export const BALANCE_FETCH_STAGGER_MS = 400
+
+/**
+ * Max attempts for transient blockchain/RPC errors (429, 5xx, network timeouts).
+ */
+export const TRANSIENT_ERROR_MAX_ATTEMPTS = 3
+
+/**
+ * Initial backoff for transient error retries (ms); doubled on each attempt.
+ */
+export const TRANSIENT_ERROR_INITIAL_BACKOFF_MS = 1000
+
+/**
  * Allowed account methods whitelist
  * Only these methods can be called through AccountService for security
  */
