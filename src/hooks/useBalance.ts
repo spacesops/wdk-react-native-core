@@ -390,11 +390,10 @@ async function fetchBalancesForQueryKeys(
     isFirstNetwork = false
 
     const networkResults: Array<{ id: string; result: BalanceFetchResult }> = []
-    for (let i = 0; i < keys.length; i++) {
-      if (i > 0) {
+    for (const queryKey of keys) {
+      if (networkResults.length > 0) {
         await delay(BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS)
       }
-      const queryKey = keys[i]
       const validated = validateQueryKeyStructure(queryKey)
       const result = await fetchBalance(
         validated.network,

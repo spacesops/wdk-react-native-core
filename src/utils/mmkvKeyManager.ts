@@ -28,9 +28,9 @@ export type AccountIdentifier = string
  * @returns Base64 encoded string
  */
 function bytesToBase64(bytes: Uint8Array): string {
-  // Try to use Buffer if available (common in React Native with polyfills)
-  if (typeof Buffer !== 'undefined') {
-    return Buffer.from(bytes).toString('base64')
+  const bufferCtor = (globalThis as { Buffer?: { from(data: Uint8Array): { toString(encoding: string): string } } }).Buffer
+  if (bufferCtor) {
+    return bufferCtor.from(bytes).toString('base64')
   }
   
   // Fallback to manual encoding for environments without Buffer

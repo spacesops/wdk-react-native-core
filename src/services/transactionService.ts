@@ -9,7 +9,7 @@ import { getIndexerConfig } from '../store/indexerConfigStore'
 import { BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS, BALANCE_FETCH_STAGGER_MS } from '../utils/constants'
 import { logError, logWarn } from '../utils/logger'
 import { delay, withTransientRetry } from '../utils/retryUtils'
-import type { IndexerTokenTransfersResponse, TokenConfigs, WalletTransaction } from '../types'
+import type { IndexerTokenTransfersResponse, TokenConfig, TokenConfigs, WalletTransaction } from '../types'
 
 export interface FetchWalletTransactionsParams {
   addresses: Record<string, Record<number, string>>
@@ -21,8 +21,27 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/$/, '')
 }
 
-function tokenSlugFromConfig(symbol: string): string {
-  return symbol.toLowerCase()
+/**
+ * Resolve the WDK Indexer `{token}` path segment, or null when this asset has no indexer history.
+ *
+ * The indexer only tracks select assets (e.g. `usdt`, `xaut`, `btc`). Native EVM gas tokens
+ * (`eth`, `matic`, …) are not valid and return 400 if requested.
+ */
+function indexerTokenSlugFromConfig(token: TokenConfig): string | null {
+  if (token.indexerToken) {
+    return token.indexerToken.toLowerCase()
+  }
+
+  if (token.address !== null) {
+    return token.symbol.toLowerCase()
+  }
+
+  // Native: only Bitcoin is indexed under `btc` today.
+  if (token.symbol.toLowerCase() === 'btc') {
+    return 'btc'
+  }
+
+  return null
 }
 
 function transactionDedupeKey(tx: WalletTransaction): string {
@@ -137,6 +156,12 @@ export class TransactionService {
     let isFirstNetwork = true
 
     for (const network of networks) {
+      const networkTokens = tokenConfigs[network]
+      const indexerBlockchain = networkTokens?.indexerBlockchain
+      if (!indexerBlockchain) {
+        continue
+      }
+
       const address = addresses[network]?.[accountIndex]
       if (!address) {
         continue
@@ -147,19 +172,24 @@ export class TransactionService {
       }
       isFirstNetwork = false
 
-      const networkTokens = tokenConfigs[network]
-      if (!networkTokens) continue
-
       const tokens = [networkTokens.native, ...networkTokens.tokens]
       for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i]
+        if (!token) continue
         if (i > 0) {
           await delay(BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS)
         }
 
-        const token = tokens[i]
-        const tokenSlug = tokenSlugFromConfig(token.symbol)
+        const tokenSlug = indexerTokenSlugFromConfig(token)
+        if (!tokenSlug) {
+          continue
+        }
         try {
-          const transfers = await this.fetchTokenTransfers(network, tokenSlug, address)
+          const transfers = await this.fetchTokenTransfers(
+            indexerBlockchain,
+            tokenSlug,
+            address
+          )
           for (const tx of transfers) {
             const withBlockchain = tx.blockchain
               ? tx
@@ -168,7 +198,7 @@ export class TransactionService {
           }
         } catch (error) {
           logError(
-            `Failed to fetch token transfers for ${network}/${tokenSlug}:`,
+            `Failed to fetch token transfers for ${indexerBlockchain}/${tokenSlug}:`,
             error
           )
         }

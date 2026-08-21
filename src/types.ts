@@ -49,6 +49,12 @@ export interface TokenConfig {
   decimals: number
   /** Token contract address (null for native tokens) */
   address: string | null
+  /**
+   * WDK Indexer token path segment for token-transfers.
+   * When omitted, ERC-20/jetton tokens use lowercase symbol; native gas tokens are skipped
+   * except Bitcoin (`btc`). Set explicitly to override or to enable native history when supported.
+   */
+  indexerToken?: string
 }
 
 /**
@@ -61,6 +67,11 @@ export interface NetworkTokens {
   native: TokenConfig
   /** Array of ERC20 token configurations */
   tokens: TokenConfig[]
+  /**
+   * WDK Indexer blockchain path segment for token-transfers on this network.
+   * When omitted, transaction history is not fetched from the indexer for this network.
+   */
+  indexerBlockchain?: string
 }
 
 /**

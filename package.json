@@ -1,6 +1,6 @@
 {
   "name": "@spacesops/wdk-react-native-core",
-  "version": "1.0.0-beta.69",
+  "version": "1.0.0-beta.72",
   "description": "Core functionality for React Native wallets - wallet management, balance fetching, and worklet operations",
   "type": "module",
   "main": "./dist/index.js",
@@ -66,6 +66,7 @@
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^12.4.0",
     "@types/jest": "^29.5.0",
+    "@types/node": "^22.20.1",
     "@types/react": "^19.0.0",
     "@types/react-native": "^0.73.0",
     "bufferutil": "^4.1.0",

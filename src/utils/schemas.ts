@@ -115,6 +115,7 @@ export const tokenConfigSchema = z.object({
   name: z.string().min(1),
   decimals: z.number().int().min(0).max(18),
   address: z.union([tokenContractAddressSchema, z.null()]),
+  indexerToken: z.string().min(1).optional(),
 })
 
 /**
@@ -123,6 +124,7 @@ export const tokenConfigSchema = z.object({
 export const networkTokensSchema = z.object({
   native: tokenConfigSchema,
   tokens: z.array(tokenConfigSchema),
+  indexerBlockchain: z.string().min(1).optional(),
 })
 
 /**

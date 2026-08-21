@@ -119,6 +119,7 @@ describe('TransactionService', () => {
 
     const tokenConfigs = {
       ethereum: {
+        indexerBlockchain: 'ethereum',
         native: { address: null, symbol: 'ETH', name: 'Ethereum', decimals: 18 },
         tokens: [
           {
@@ -143,9 +144,54 @@ describe('TransactionService', () => {
       tokenConfigs,
     })
 
+    expect(mockFetch).toHaveBeenCalledTimes(2)
     expect(list).toHaveLength(2)
     expect(list[0].transactionHash).toBe('0x2')
     expect(list[1].transactionHash).toBe('0x1')
+  })
+
+  it('skips networks without indexerBlockchain configured', async () => {
+    await TransactionService.fetchWalletTransactions({
+      addresses: { solana: { 0: 'SolWallet' } },
+      accountIndex: 0,
+      tokenConfigs: {
+        solana: {
+          native: { address: null, symbol: 'SOL', name: 'Solana', decimals: 9 },
+          tokens: [
+            {
+              address: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+              symbol: 'USDT',
+              name: 'Tether USD',
+              decimals: 6,
+            },
+          ],
+        },
+      },
+    })
+
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('skips native gas tokens that the indexer does not track', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ transfers: [] }),
+    })
+
+    await TransactionService.fetchWalletTransactions({
+      addresses: { ethereum: { 0: '0xWallet' } },
+      accountIndex: 0,
+      tokenConfigs: {
+        ethereum: {
+          indexerBlockchain: 'ethereum',
+          native: { address: null, symbol: 'ETH', name: 'Ethereum', decimals: 18 },
+          tokens: [],
+        },
+      },
+    })
+
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 
   it('resolveWalletTransactions returns empty when indexer not configured', async () => {
@@ -155,6 +201,7 @@ describe('TransactionService', () => {
       accountIndex: 0,
       tokenConfigs: {
         ethereum: {
+          indexerBlockchain: 'ethereum',
           native: { address: null, symbol: 'ETH', name: 'Ethereum', decimals: 18 },
           tokens: [],
         },
