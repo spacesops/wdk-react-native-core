@@ -158,6 +158,42 @@ export interface BalanceFetchResult {
 export type TokenConfigProvider = TokenConfigs | (() => TokenConfigs)
 
 /**
+ * WDK Indexer API configuration (balance/transaction history).
+ */
+export interface IndexerConfig {
+  /** Base URL, e.g. https://wdk-api.tether.io */
+  baseUrl: string
+  /** API key sent as x-api-key header */
+  apiKey: string
+}
+
+/**
+ * Token transfer from the WDK Indexer token-transfers endpoint.
+ */
+export interface WalletTransaction {
+  blockchain: string
+  blockNumber?: number
+  transactionHash: string
+  transferIndex?: number
+  token: string
+  amount: string
+  /** Unix timestamp in seconds (indexer convention) */
+  timestamp: number
+  transactionIndex?: number
+  logIndex?: number
+  from: string
+  to: string
+  label?: string
+}
+
+/**
+ * Raw indexer response for token-transfers.
+ */
+export interface IndexerTokenTransfersResponse {
+  transfers?: WalletTransaction[]
+}
+
+/**
  * Token Helpers
  * 
  * Helper functions for working with token configurations.

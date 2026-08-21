@@ -74,6 +74,12 @@ export const DEFAULT_QUERY_GC_TIME_MS = 5 * 60 * 1000
 export const BALANCE_FETCH_STAGGER_MS = 400
 
 /**
+ * Delay between token balance fetches within the same network (ms).
+ * TON jetton balances issue multiple RPC calls each; serializing avoids 429 bursts.
+ */
+export const BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS = 300
+
+/**
  * Max attempts for transient blockchain/RPC errors (429, 5xx, network timeouts).
  */
 export const TRANSIENT_ERROR_MAX_ATTEMPTS = 3

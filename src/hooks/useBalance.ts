@@ -55,6 +55,7 @@ import {
   DEFAULT_QUERY_STALE_TIME_MS,
   DEFAULT_QUERY_GC_TIME_MS,
   BALANCE_FETCH_STAGGER_MS,
+  BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS,
 } from '../utils/constants'
 import { logError } from '../utils/logger'
 import { delay, withTransientRetry } from '../utils/retryUtils'
@@ -388,18 +389,21 @@ async function fetchBalancesForQueryKeys(
     }
     isFirstNetwork = false
 
-    const networkResults = await Promise.all(
-      keys.map(async (queryKey) => {
-        const validated = validateQueryKeyStructure(queryKey)
-        const result = await fetchBalance(
-          validated.network,
-          validated.accountIndex,
-          validated.tokenAddress,
-          walletId
-        )
-        return { id: balanceQueryKeyId(queryKey), result }
-      })
-    )
+    const networkResults: Array<{ id: string; result: BalanceFetchResult }> = []
+    for (let i = 0; i < keys.length; i++) {
+      if (i > 0) {
+        await delay(BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS)
+      }
+      const queryKey = keys[i]
+      const validated = validateQueryKeyStructure(queryKey)
+      const result = await fetchBalance(
+        validated.network,
+        validated.accountIndex,
+        validated.tokenAddress,
+        walletId
+      )
+      networkResults.push({ id: balanceQueryKeyId(queryKey), result })
+    }
 
     for (const { id, result } of networkResults) {
       results.set(id, result)

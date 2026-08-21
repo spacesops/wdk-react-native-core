@@ -20,6 +20,9 @@ export type {
   TokenConfigProvider,
   TokenHelpers,
   WalletStore,
+  IndexerConfig,
+  WalletTransaction,
+  IndexerTokenTransfersResponse,
 } from './types'
 
 // HRPC Type Extensions (for extending HRPC functionality)
@@ -38,6 +41,8 @@ export { useWdkApp } from './hooks/useWdkApp'
 export { useWalletManager } from './hooks/useWalletManager'
 export type { UseWalletManagerResult, WalletInfo } from './hooks/useWalletManager'
 export { useBalance, useBalancesForWallet, useBalancesForWallets, useRefreshBalance, balanceQueryKeys } from './hooks/useBalance'
+export { useWalletTransactions, transactionQueryKeys } from './hooks/useTransactions'
+export type { WalletTransactionsQueryOptions } from './hooks/useTransactions'
 export type { AccountInfo } from './store/walletStore'
 
 // Validation Utilities (for validating configs before use)
@@ -84,6 +89,7 @@ export { WorkletLifecycleService } from './services/workletLifecycleService'
 export { AddressService } from './services/addressService'
 export { AccountService } from './services/accountService'
 export { BalanceService } from './services/balanceService'
+export { TransactionService } from './services/transactionService'
 export { WalletSetupService } from './services/walletSetupService'
 export { WalletSwitchingService } from './services/walletSwitchingService'
 

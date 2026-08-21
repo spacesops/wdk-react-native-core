@@ -48,7 +48,8 @@ import { log, logError } from '../utils/logger'
 import { validateNetworkConfigs, validateTokenConfigs } from '../utils/validation'
 import { DEFAULT_QUERY_STALE_TIME_MS, DEFAULT_QUERY_GC_TIME_MS } from '../utils/constants'
 import { InitializationStatus, AppStatus, isAppReadyStatus, isAppInProgressStatus, getCombinedStatus, getWorkletStatus } from '../utils/initializationState'
-import type { NetworkConfigs, TokenConfigs } from '../types'
+import type { IndexerConfig, NetworkConfigs, TokenConfigs } from '../types'
+import { setIndexerConfig } from '../store/indexerConfigStore'
 
 
 
@@ -134,6 +135,11 @@ export interface WdkAppProviderProps {
   networkConfigs: NetworkConfigs
   /** Token configurations for balance fetching */
   tokenConfigs: TokenConfigs
+  /**
+   * WDK Indexer configuration for transaction history.
+   * Apps typically pass EXPO_PUBLIC_WDK_INDEXER_BASE_URL and EXPO_PUBLIC_WDK_INDEXER_API_KEY.
+   */
+  indexerConfig?: IndexerConfig
   /** Enable automatic wallet initialization on app restart (default: true) */
   enableAutoInitialization?: boolean
   /**
@@ -190,6 +196,7 @@ const deepEqualityFn = (a: any, b: any) => {
 export function WdkAppProvider({
   networkConfigs,
   tokenConfigs,
+  indexerConfig,
   enableAutoInitialization = true,
   currentUserId,
   children,
@@ -266,6 +273,11 @@ export function WdkAppProvider({
       throw err
     }
   }, [networkConfigs, tokenConfigs])
+
+  useEffect(() => {
+    setIndexerConfig(indexerConfig ?? null)
+    return () => setIndexerConfig(null)
+  }, [indexerConfig])
 
   // Worklet state - read from workletStore via hook
   const workletHookState = useWorklet()
