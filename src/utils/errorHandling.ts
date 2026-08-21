@@ -35,6 +35,7 @@
 
 import { normalizeError } from './errorUtils'
 import { logError } from './logger'
+import { isTransientBlockchainError } from './retryUtils'
 
 /**
  * Handle service errors with consistent normalization and logging
@@ -55,7 +56,9 @@ export function handleServiceError(
   context?: Record<string, unknown>
 ): never {
   const normalized = normalizeError(error, false, { component, operation, ...context })
-  logError(`[${component}] ${operation} failed:`, normalized)
+  if (!isTransientBlockchainError(error)) {
+    logError(`[${component}] ${operation} failed:`, normalized)
+  }
   throw normalized
 }
 

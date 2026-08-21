@@ -56,6 +56,9 @@ import {
   DEFAULT_QUERY_GC_TIME_MS,
   BALANCE_FETCH_STAGGER_MS,
   BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS,
+  TON_BALANCE_NETWORK_EXTRA_STAGGER_MS,
+  TRANSIENT_ERROR_INITIAL_BACKOFF_MS,
+  TRANSIENT_ERROR_MAX_ATTEMPTS,
 } from '../utils/constants'
 import { logError } from '../utils/logger'
 import { delay, withTransientRetry } from '../utils/retryUtils'
@@ -216,6 +219,9 @@ async function fetchBalance(
         ),
       {
         label: `${network} ${methodName}`,
+        maxAttempts: network === 'ton' ? 5 : TRANSIENT_ERROR_MAX_ATTEMPTS,
+        initialBackoffMs:
+          network === 'ton' ? 2000 : TRANSIENT_ERROR_INITIAL_BACKOFF_MS,
       }
     )
 
@@ -388,6 +394,14 @@ async function fetchBalancesForQueryKeys(
       await delay(BALANCE_FETCH_STAGGER_MS)
     }
     isFirstNetwork = false
+
+    const firstKey = keys[0]
+    if (firstKey) {
+      const { network } = validateQueryKeyStructure(firstKey)
+      if (network === 'ton') {
+        await delay(TON_BALANCE_NETWORK_EXTRA_STAGGER_MS)
+      }
+    }
 
     const networkResults: Array<{ id: string; result: BalanceFetchResult }> = []
     for (const queryKey of keys) {

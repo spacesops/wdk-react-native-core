@@ -80,6 +80,11 @@ export const BALANCE_FETCH_STAGGER_MS = 400
 export const BALANCE_FETCH_INTRA_NETWORK_STAGGER_MS = 300
 
 /**
+ * Extra delay before fetching TON balances (native + jetton each fan out to TON Center).
+ */
+export const TON_BALANCE_NETWORK_EXTRA_STAGGER_MS = 800
+
+/**
  * Max attempts for transient blockchain/RPC errors (429, 5xx, network timeouts).
  */
 export const TRANSIENT_ERROR_MAX_ATTEMPTS = 3
