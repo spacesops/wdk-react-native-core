@@ -154,6 +154,17 @@ describe('AddressService', () => {
       )
     })
 
+    it('should accept worklet results shaped as { address }', async () => {
+      const mockAddress = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0'
+      mockHRPC.callMethod.mockResolvedValue({
+        result: JSON.stringify({ address: mockAddress }),
+      })
+
+      const address = await AddressService.getAddress('ethereum', 0)
+
+      expect(address).toBe(mockAddress)
+    })
+
     it('should handle different account indices', async () => {
       const address0 = '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb0'
       const address1 = '0x842d35Cc6634C0532925a3b844Bc9e7595f0bEb0'

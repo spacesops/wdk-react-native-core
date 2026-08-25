@@ -82,14 +82,20 @@ export class AddressService {
       let address: string
       try {
         const parsed = JSON.parse(response.result)
-        if (typeof parsed !== 'string') {
+        const resolved =
+          typeof parsed === 'string'
+            ? parsed
+            : parsed && typeof parsed === 'object' && typeof parsed.address === 'string'
+              ? parsed.address
+              : null
+        if (!resolved) {
           throw new Error('Address must be a string')
         }
         // Runtime validation of address format
-        if (!isValidAddress(parsed)) {
-          throw new Error(`Address from worklet has invalid format: ${parsed}`)
+        if (!isValidAddress(resolved)) {
+          throw new Error(`Address from worklet has invalid format: ${resolved}`)
         }
-        address = parsed
+        address = resolved
       } catch (error) {
         throw new Error(`Failed to parse address from worklet response: ${error instanceof Error ? error.message : String(error)}`)
       }
