@@ -56,6 +56,24 @@ function addressesFingerprint(
   return parts.join('|')
 }
 
+/** Include which networks/tokens are requested so filtered configs refetch correctly. */
+function tokenConfigsFingerprint(tokenConfigs: TokenConfigs): string {
+  return Object.keys(tokenConfigs)
+    .sort()
+    .map((network) => {
+      const config = tokenConfigs[network]
+      if (!config?.indexerBlockchain) {
+        return ''
+      }
+      const tokens = [config.native, ...config.tokens]
+        .map((t) => `${t.symbol}:${(t.address ?? 'native').toLowerCase()}`)
+        .join(',')
+      return `${network}:${config.indexerBlockchain}[${tokens}]`
+    })
+    .filter(Boolean)
+    .join('|')
+}
+
 async function ensureIndexerAddresses(
   walletId: string,
   accountIndex: number,
@@ -118,13 +136,18 @@ export function useWalletTransactions(
     useShallow((state) => state.addresses[walletId] ?? {})
   )
   const addressKey = addressesFingerprint(addresses, accountIndex, tokenConfigsObj)
+  const tokensKey = tokenConfigsFingerprint(tokenConfigsObj)
   const indexerReady = isIndexerConfigured()
   const hasIndexerNetworks = Object.values(tokenConfigsObj).some(
     (networkTokens) => Boolean(networkTokens?.indexerBlockchain)
   )
 
   return useQuery({
-    queryKey: [...transactionQueryKeys.byWallet(walletId, accountIndex), addressKey],
+    queryKey: [
+      ...transactionQueryKeys.byWallet(walletId, accountIndex),
+      addressKey,
+      tokensKey,
+    ],
     queryFn: () => fetchWalletTransactionsForAccount(walletId, accountIndex, tokenConfigs),
     enabled:
       (options?.enabled !== false) &&
