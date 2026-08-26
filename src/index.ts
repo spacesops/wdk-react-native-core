@@ -88,6 +88,11 @@ export {
 export { WorkletLifecycleService } from './services/workletLifecycleService'
 export { AddressService } from './services/addressService'
 export { AccountService } from './services/accountService'
+export type {
+  UpdateTransactionWithHexOptions,
+  QuotedUpdateTransactionWithHex,
+  DerivedTaprootAddressEntry,
+} from './services/accountService'
 export { BalanceService } from './services/balanceService'
 export { TransactionService } from './services/transactionService'
 export { WalletSetupService } from './services/walletSetupService'

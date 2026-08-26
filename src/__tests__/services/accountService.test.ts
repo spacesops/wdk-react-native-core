@@ -413,4 +413,105 @@ describe('AccountService', () => {
       ).rejects.toThrow(/callMethodByPath is not available/)
     })
   })
+
+  describe('quoteUpdateTransactionWithHexTX', () => {
+    it('should quote via callMethod and map hex to txHex', async () => {
+      mockHRPC.callMethod.mockResolvedValue({
+        result: JSON.stringify({ hex: 'aabbcc', fee: '250' }),
+      })
+
+      const options = {
+        to: 'bc1qdest',
+        hex: 'deadbeef',
+        priorTx: 'txid1',
+        priorAccountRelativePath: "9'/0/0",
+        confirmationTarget: 1,
+      }
+
+      const result = await AccountService.quoteUpdateTransactionWithHexTX(
+        'bitcoin',
+        0,
+        options
+      )
+
+      expect(result).toEqual({ txHex: 'aabbcc', fee: '250' })
+      expect(mockHRPC.callMethod).toHaveBeenCalledWith({
+        methodName: 'quoteUpdateTransactionWithHexTX',
+        network: 'bitcoin',
+        accountIndex: 0,
+        args: JSON.stringify(options),
+      })
+    })
+
+    it('should require priorAccountRelativePath', async () => {
+      await expect(
+        AccountService.quoteUpdateTransactionWithHexTX('bitcoin', 0, {
+          to: 'bc1qdest',
+          hex: 'deadbeef',
+          priorTx: 'txid1',
+          priorAccountRelativePath: '',
+        })
+      ).rejects.toThrow('options.priorAccountRelativePath must be a non-empty string')
+    })
+  })
+
+  describe('updateTransactionWithHex', () => {
+    it('should broadcast via callMethod and return hash and fee', async () => {
+      mockHRPC.callMethod.mockResolvedValue({
+        result: JSON.stringify({ hash: 'txidabc', fee: '250' }),
+      })
+
+      const options = {
+        to: 'bc1qdest',
+        hex: 'deadbeef',
+        priorTx: 'txid1',
+        priorAccountRelativePath: "9'/0/0",
+      }
+
+      const result = await AccountService.updateTransactionWithHex('bitcoin', 0, options)
+
+      expect(result).toEqual({ hash: 'txidabc', fee: '250' })
+      expect(mockHRPC.callMethod).toHaveBeenCalledWith({
+        methodName: 'updateTransactionWithHex',
+        network: 'bitcoin',
+        accountIndex: 0,
+        args: JSON.stringify(options),
+      })
+    })
+  })
+
+  describe('deriveTaprootAddressesFromPaths', () => {
+    it('should call the batch HRPC method and return addressesJson', async () => {
+      mockHRPC.deriveTaprootAddressesFromPaths = jest.fn().mockResolvedValue({
+        addressesJson: JSON.stringify([
+          { address: 'bc1pabc', scriptPubKeyHex: '5120aa' },
+        ]),
+      })
+
+      const result = await AccountService.deriveTaprootAddressesFromPaths(["9'/0/0"], {
+        includeKeyMaterial: true,
+      })
+
+      expect(result.addressesJson).toContain('bc1pabc')
+      expect(mockHRPC.deriveTaprootAddressesFromPaths).toHaveBeenCalledWith({
+        relativePathsJson: JSON.stringify(["9'/0/0"]),
+        network: 'bitcoin',
+        includeKeyMaterial: 1,
+      })
+    })
+
+    it('should throw if the HRPC method is missing', async () => {
+      delete mockHRPC.deriveTaprootAddressesFromPaths
+
+      await expect(
+        AccountService.deriveTaprootAddressesFromPaths(["9'/0/0"])
+      ).rejects.toThrow(/deriveTaprootAddressesFromPaths is not available/)
+    })
+
+    it('should reject an empty path list', async () => {
+      await expect(AccountService.deriveTaprootAddressesFromPaths([])).rejects.toThrow(
+        'relativePaths must be a non-empty array of path suffix strings'
+      )
+    })
+  })
 })

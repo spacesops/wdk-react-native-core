@@ -224,5 +224,157 @@ export class AccountService {
       })
     }
   }
+
+  /**
+   * Quote an on-chain hex-update transaction (no broadcast).
+   *
+   * `WalletAccountBtc` needs a live `priorAcct`; the worklet resolves
+   * `priorAccountRelativePath` via `getAccountByPath` before calling the method.
+   */
+  static async quoteUpdateTransactionWithHexTX(
+    network: string,
+    fundingAccountIndex: number,
+    options: UpdateTransactionWithHexOptions
+  ): Promise<QuotedUpdateTransactionWithHex> {
+    validateUpdateTransactionWithHexOptions(options)
+    const result = await AccountService.callAccountMethod<
+      { hex?: string; txHex?: string; fee?: string | number } | string
+    >(network, fundingAccountIndex, 'quoteUpdateTransactionWithHexTX', options)
+
+    const txHex =
+      typeof result === 'string'
+        ? result
+        : result?.txHex || result?.hex || ''
+    if (!txHex) {
+      throw new Error('quoteUpdateTransactionWithHexTX returned no transaction hex')
+    }
+    const fee =
+      typeof result === 'object' && result?.fee != null ? String(result.fee) : undefined
+    return fee != null ? { txHex, fee } : { txHex }
+  }
+
+  /**
+   * Build, sign, and broadcast an on-chain hex-update transaction.
+   * Same prior-account resolution as {@link quoteUpdateTransactionWithHexTX}.
+   */
+  static async updateTransactionWithHex(
+    network: string,
+    fundingAccountIndex: number,
+    options: UpdateTransactionWithHexOptions
+  ): Promise<{ hash: string; fee: string }> {
+    validateUpdateTransactionWithHexOptions(options)
+    const result = await AccountService.callAccountMethod<{
+      hash?: string
+      fee?: string | number
+    }>(network, fundingAccountIndex, 'updateTransactionWithHex', options)
+
+    const hash = result?.hash ? String(result.hash) : ''
+    if (!hash) {
+      throw new Error('updateTransactionWithHex returned no transaction hash')
+    }
+    return { hash, fee: result?.fee != null ? String(result.fee) : '0' }
+  }
+
+  /**
+   * Batch-derive Taproot addresses / scriptPubKeys (optional key material)
+   * for wallet-relative BIP path suffixes. Runs inside the worklet via
+   * `wdk.getAccountByPath` so Find Spaces / path reservation is one HRPC round-trip.
+   */
+  static async deriveTaprootAddressesFromPaths(
+    relativePaths: string[],
+    options?: { network?: string; includeKeyMaterial?: boolean }
+  ): Promise<{ addressesJson: string }> {
+    if (!Array.isArray(relativePaths) || relativePaths.length === 0) {
+      throw new Error('relativePaths must be a non-empty array of path suffix strings')
+    }
+    const trimmed = relativePaths.map((rel) => {
+      if (typeof rel !== 'string' || rel.trim().length === 0) {
+        throw new Error('Each relative path must be a non-empty string')
+      }
+      return rel.trim()
+    })
+
+    const network = options?.network?.trim() || 'bitcoin'
+    validateNetworkName(network)
+
+    const hrpc = requireInitialized() as {
+      deriveTaprootAddressesFromPaths?: (args: {
+        relativePathsJson: string
+        network?: string
+        includeKeyMaterial?: number
+      }) => Promise<{ addressesJson?: string | null }>
+    }
+
+    if (typeof hrpc.deriveTaprootAddressesFromPaths !== 'function') {
+      throw new Error(
+        'HRPC.deriveTaprootAddressesFromPaths is not available — upgrade @spacesops/pear-wrk-wdk'
+      )
+    }
+
+    try {
+      const response = await hrpc.deriveTaprootAddressesFromPaths({
+        relativePathsJson: JSON.stringify(trimmed),
+        network,
+        ...(options?.includeKeyMaterial ? { includeKeyMaterial: 1 } : {}),
+      })
+      const addressesJson = response?.addressesJson
+      if (typeof addressesJson !== 'string' || addressesJson.length === 0) {
+        throw new Error('deriveTaprootAddressesFromPaths returned no addressesJson')
+      }
+      return { addressesJson }
+    } catch (error) {
+      handleServiceError(error, 'AccountService', 'deriveTaprootAddressesFromPaths', {
+        network,
+        pathCount: trimmed.length,
+      })
+    }
+  }
+}
+
+export type UpdateTransactionWithHexOptions = {
+  to: string
+  hex: string
+  priorTx: string
+  /** BIP relative path resolved inside the worklet via `getAccountByPath`. */
+  priorAccountRelativePath: string
+  value?: string | number
+  feeRate?: string | number
+  confirmationTarget?: number
+}
+
+export type QuotedUpdateTransactionWithHex = {
+  txHex: string
+  fee?: string
+}
+
+export type DerivedTaprootAddressEntry = {
+  address: string
+  scriptPubKeyHex: string
+  internalPubKeyHex?: string
+  privateKeyHex?: string
+  tweakedPrivateKeyHex?: string
+}
+
+function validateUpdateTransactionWithHexOptions(
+  options: UpdateTransactionWithHexOptions
+): void {
+  if (!options || typeof options !== 'object') {
+    throw new Error('options must be an object')
+  }
+  if (typeof options.to !== 'string' || options.to.trim().length === 0) {
+    throw new Error('options.to must be a non-empty string')
+  }
+  if (typeof options.hex !== 'string' || options.hex.trim().length === 0) {
+    throw new Error('options.hex must be a non-empty string')
+  }
+  if (typeof options.priorTx !== 'string' || options.priorTx.trim().length === 0) {
+    throw new Error('options.priorTx must be a non-empty string')
+  }
+  if (
+    typeof options.priorAccountRelativePath !== 'string' ||
+    options.priorAccountRelativePath.trim().length === 0
+  ) {
+    throw new Error('options.priorAccountRelativePath must be a non-empty string')
+  }
 }
 
